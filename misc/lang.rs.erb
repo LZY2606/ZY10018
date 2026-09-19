@@ -1,0 +1,209 @@
+// NOTE:
+//    This file is generated automatically.
+//    Edit misc/lang.rs.erb template instead of editing lang.rs file directly.
+
+use std::fmt;
+use std::str::FromStr;
+
+use crate::error::ParseError;
+
+/// Represents a language following [ISO 639-3](https://en.wikipedia.org/wiki/ISO_639-3) standard.
+#[cfg_attr(feature = "enum-map", derive(::enum_map::Enum))]
+#[cfg_attr(feature = "arbitrary", derive(::arbitrary::Arbitrary))]
+#[cfg_attr(
+    feature = "serde",
+    derive(::serde::Serialize, ::serde::Deserialize),
+    serde(rename_all = "lowercase")
+)]
+#[derive(PartialEq, Eq, Debug, Hash, Clone, Copy)]
+pub enum Lang {
+    <% langs.each_with_index do |lang, index| %>
+    /// <%= lang.name %> (<%= lang.eng_name %>)
+    <%= lang.code.capitalize %> = <%= index %>,
+    <% end %>
+}
+
+const VALUES: [Lang; <%= langs.size %>] = [
+    <% langs.each do |lang| %>
+    Lang::<%= lang.code.capitalize %>,
+    <% end %>
+];
+
+
+fn lang_from_code<S: Into<String>>(code: S) -> Option<Lang> {
+    match code.into().to_lowercase().as_ref() {
+        <% langs.each do |lang| %>
+        "<%= lang.code %>" => Some(Lang::<%= lang.code.capitalize %>),<% end %>
+        _ => None,
+    }
+}
+
+fn lang_to_code(lang: Lang) -> &'static str {
+    match lang {
+        <% langs.each do |lang| %>
+        Lang::<%= lang.code.capitalize %> => "<%= lang.code %>",<% end %>
+    }
+}
+
+fn lang_to_name(lang: Lang) -> &'static str {
+    match lang {
+        <% langs.each do |lang| %>
+        Lang::<%= lang.code.capitalize %> => "<%= lang.name %>",<% end %>
+    }
+}
+
+fn lang_to_eng_name(lang: Lang) -> &'static str {
+    match lang {
+        <% langs.each do |lang| %>
+        Lang::<%= lang.code.capitalize %> => "<%= lang.eng_name %>",<% end %>
+    }
+}
+
+impl Lang {
+    /// Get enum by ISO 639-3 code as a string.
+    ///
+    /// # Example
+    /// ```
+    /// use whatlang::Lang;
+    /// assert_eq!(Lang::from_code("ukr"), Some(Lang::Ukr));
+    /// ```
+    pub fn from_code<S: Into<String>>(code: S) -> Option<Lang> {
+        lang_from_code(code)
+    }
+
+    /// Convert enum into ISO 639-3 code as a string.
+    ///
+    /// # Example
+    /// ```
+    /// use whatlang::Lang;
+    /// assert_eq!(Lang::Ukr.code(), "ukr");
+    /// ```
+    pub fn code(&self) -> &'static str {
+        lang_to_code(*self)
+    }
+
+    /// Get a language name in the language itself.
+    ///
+    /// # Example
+    /// ```
+    /// use whatlang::Lang;
+    /// assert_eq!(Lang::Ukr.name(), "Українська");
+    /// ```
+    pub fn name(self) -> &'static str {
+        lang_to_name(self)
+    }
+
+    /// Get a human readable name of the language in English.
+    ///
+    /// # Example
+    /// ```
+    /// use whatlang::Lang;
+    /// assert_eq!(Lang::Deu.eng_name(), "German");
+    /// ```
+    pub fn eng_name(self) -> &'static str {
+        lang_to_eng_name(self)
+    }
+
+    /// Get all existing languages.
+    ///
+    /// # Example
+    /// ```
+    /// use whatlang::Lang;
+    /// for lang in Lang::all() {
+    ///     println!("{}", lang);
+    /// }
+    /// ```
+    pub fn all() -> &'static [Lang] {
+        &VALUES
+    }
+}
+
+impl fmt::Display for Lang {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name())
+    }
+}
+
+impl FromStr for Lang {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Lang::from_code(s).ok_or_else(|| ParseError::Lang(s.to_string()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_code() {
+        assert_eq!(Lang::from_code("rus".to_string()), Some(Lang::Rus));
+        assert_eq!(Lang::from_code("ukr"), Some(Lang::Ukr));
+        assert_eq!(Lang::from_code("ENG"), Some(Lang::Eng));
+        assert_eq!(Lang::from_code("oops"), None);
+    }
+
+    #[test]
+    fn test_code() {
+        assert_eq!(Lang::Spa.code(), "spa");
+    }
+
+    #[test]
+    fn test_name() {
+        assert_eq!(Lang::Rus.name(), "Русский");
+        assert_eq!(Lang::Spa.name(), "Español");
+        assert_eq!(Lang::Epo.name(), "Esperanto");
+    }
+
+    #[test]
+    fn test_eng_name() {
+        assert_eq!(Lang::Spa.eng_name(), "Spanish");
+        assert_eq!(Lang::Epo.eng_name(), "Esperanto");
+        assert_eq!(Lang::Rus.eng_name(), "Russian");
+    }
+
+    #[test]
+    fn test_all() {
+        assert_eq!(Lang::all().len(), <%= langs.size %>);
+        let all = Lang::all();
+        assert!(all.contains(&Lang::Ukr));
+        assert!(all.contains(&Lang::Swe));
+    }
+
+    #[test]
+    fn test_from_str() {
+        for &lang in Lang::all() {
+            let s = lang.code();
+            assert_eq!(s.parse::<Lang>().unwrap(), lang);
+            assert_eq!(s.to_lowercase().parse::<Lang>().unwrap(), lang);
+            assert_eq!(s.to_uppercase().parse::<Lang>().unwrap(), lang);
+        }
+
+        let result = "xyz".parse::<Lang>();
+        assert!(
+            matches!(
+                result,
+                Err(ParseError::Lang(_))
+            )
+        );
+    }
+
+    #[test]
+    fn test_lang_display() {
+        assert_eq!(Lang::Epo.to_string(), "Esperanto");
+        assert_eq!(Lang::Ukr.to_string(), "Українська");
+        assert_eq!(Lang::Deu.to_string(), "Deutsch");
+        assert_eq!(Lang::Eng.to_string(), "English");
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn test_serialize_and_deserialize() {
+        let langs = vec![Lang::Epo, Lang::Ukr, Lang::Spa];
+        let json_langs = serde_json::to_string(&langs).unwrap();
+        assert_eq!(json_langs, r#"["epo","ukr","spa"]"#);
+        let parsed_langs: Vec<Lang> = serde_json::from_str(&json_langs).unwrap();
+        assert_eq!(parsed_langs, langs);
+    }
+}
