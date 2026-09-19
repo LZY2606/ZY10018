@@ -5,6 +5,8 @@ mod filter_list;
 mod info;
 mod method;
 mod options;
+#[cfg(test)]
+pub(crate) mod probe;
 mod query;
 mod text;
 

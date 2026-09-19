@@ -45,7 +45,10 @@ pub fn detect_by_query(query: &Query) -> Option<Info> {
     let raw_script_info = raw_detect_script(query.text);
     let script = raw_script_info.main_script()?;
 
-    match script.to_lang_group() {
+    let lang_group = script.to_lang_group();
+    #[cfg(test)]
+    crate::core::probe::note_lang_group(&lang_group);
+    match lang_group {
         ScriptLangGroup::One(lang) => Some(Info::new(script, lang, 1.0)),
         ScriptLangGroup::Multi(multi_lang_script) => {
             detect_by_query_based_on_script(query, multi_lang_script)

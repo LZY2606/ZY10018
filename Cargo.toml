@@ -36,3 +36,9 @@ dev = []
 name = "example"
 harness = false
 path = "benches/example.rs"
+required-features = ["dev"]
+
+[[test]]
+name = "understanding"
+path = "tests/understanding.rs"
+harness = false

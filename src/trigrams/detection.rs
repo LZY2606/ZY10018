@@ -80,6 +80,9 @@ fn calculate_scores_in_profiles(
         lang_distances.push(((lang), dist));
     }
 
+    #[cfg(test)]
+    crate::core::probe::note_trigram_run(lang_distances.len());
+
     // Sort languages by distance
     lang_distances.sort_unstable_by_key(|(_, dist)| *dist);
 
