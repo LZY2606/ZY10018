@@ -46,8 +46,12 @@ mod combined;
 mod core;
 mod error;
 mod lang;
+#[cfg(test)]
+mod observe;
 mod scripts;
 mod trigrams;
+#[cfg(test)]
+mod understanding_tests;
 mod utils;
 
 #[cfg(feature = "dev")]

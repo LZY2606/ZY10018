@@ -46,11 +46,19 @@ pub fn detect_by_query(query: &Query) -> Option<Info> {
     let script = raw_script_info.main_script()?;
 
     match script.to_lang_group() {
-        ScriptLangGroup::One(lang) => Some(Info::new(script, lang, 1.0)),
+        ScriptLangGroup::One(lang) => {
+            #[cfg(test)]
+            crate::observe::note_path(crate::observe::DetectPath::OneLang);
+            Some(Info::new(script, lang, 1.0))
+        }
         ScriptLangGroup::Multi(multi_lang_script) => {
+            #[cfg(test)]
+            crate::observe::note_path(crate::observe::DetectPath::Multi);
             detect_by_query_based_on_script(query, multi_lang_script)
         }
         ScriptLangGroup::Mandarin => {
+            #[cfg(test)]
+            crate::observe::note_path(crate::observe::DetectPath::Mandarin);
             Some(detect_lang_base_on_mandarin_script(query, &raw_script_info))
         }
     }
